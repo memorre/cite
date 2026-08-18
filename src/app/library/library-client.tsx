@@ -88,9 +88,11 @@ export function LibraryClient({
           <Card className="flex items-start gap-2.5 border-warning/30 bg-warning-soft p-3 text-xs text-warning">
             <KeyRound className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              No LLM API key configured yet. Documents will still upload and chunk, but embedding and chat need{" "}
-              <code className="rounded bg-surface px-1 py-0.5 whitespace-nowrap">OPENAI_API_KEY</code> or{" "}
-              <code className="rounded bg-surface px-1 py-0.5 whitespace-nowrap">ANTHROPIC_API_KEY</code> set.
+              No LLM API key configured yet. Uploads still parse and chunk fine, but embedding (needed for search)
+              requires <code className="rounded bg-surface px-1 py-0.5 whitespace-nowrap">OPENAI_API_KEY</code>{" "}
+              specifically. Chat additionally accepts{" "}
+              <code className="rounded bg-surface px-1 py-0.5 whitespace-nowrap">ANTHROPIC_API_KEY</code> or{" "}
+              <code className="rounded bg-surface px-1 py-0.5 whitespace-nowrap">MOONSHOT_API_KEY</code>.
             </span>
           </Card>
         </motion.div>

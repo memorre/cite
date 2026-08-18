@@ -45,11 +45,13 @@ Supabase all support it). Easiest path: `vercel link`, then `vercel integration 
 openssl rand -base64 32
 ```
 
-For the LLM, set **one** of:
+For the LLM, set **one** chat key — and, separately, `OPENAI_API_KEY` if you want embedding (and therefore search)
+to work at all:
 
 ```bash
-OPENAI_API_KEY="sk-..."       # used for chat AND embeddings
-ANTHROPIC_API_KEY="sk-ant-..." # used for chat only — embeddings still need OPENAI_API_KEY, see below
+OPENAI_API_KEY="sk-..."         # chat AND embeddings — the only key needed if you pick this one
+ANTHROPIC_API_KEY="sk-ant-..."   # chat only — embeddings still need OPENAI_API_KEY, see below
+MOONSHOT_API_KEY="sk-..."        # chat only (Kimi, via Moonshot's OpenAI-compatible endpoint) — same caveat
 ```
 
 Open http://localhost:3000. The login page has a one-click demo account: `demo@cite.app` / `password123`. No
@@ -58,9 +60,19 @@ yourself after signing in.
 
 ### Why embeddings always use OpenAI
 
-Anthropic has no first-party embeddings API. If `ANTHROPIC_API_KEY` is set for chat, embeddings still need
-`OPENAI_API_KEY` — the app runs with **chat only** disabled if that's missing, and shows exactly that in the UI
-(the library page's "no API key" banner, and the chat input's disabled placeholder) rather than failing silently.
+Neither Anthropic nor Moonshot/Kimi expose a first-party embeddings API (confirmed against Moonshot's own model
+list — chat models only, no embedding model ID). So if `ANTHROPIC_API_KEY` or `MOONSHOT_API_KEY` is set for chat,
+embedding — and therefore document search — still needs `OPENAI_API_KEY` on top of it. The app never fails
+silently about this: the library page's banner and the chat input's disabled placeholder say exactly what's
+missing, and a document that finishes parsing but can't embed is marked `FAILED` with the same reason, not stuck
+"processing" forever.
+
+**Kimi model note:** `getChatModel()` targets `kimi-k2.6` specifically — the exact model IDs available differ per
+account (checked via `GET /v1/models` against the deployed key, which returned `kimi-k2.6` and
+`kimi-k2.7-code`, not the `kimi-k3` default the public quickstart docs currently advertise). Kimi's models also
+reject any `temperature` other than the default (1) — passing one 400s. Both live behind the standard
+`https://api.moonshot.cn/v1` OpenAI-compatible endpoint via `@langchain/openai`'s `ChatOpenAI` with a custom
+`configuration.baseURL`, not a separate LangChain integration package.
 
 ## Architecture and data model
 
@@ -92,8 +104,9 @@ User ──< Document ──< Chunk (content, page, embedding: vector(1536))
 |---|---|---|
 | `DATABASE_URL` | Yes | Postgres connection string; needs the `vector` extension available. |
 | `AUTH_SECRET` | Yes | Signs session JWTs. Generate with `openssl rand -base64 32`. |
-| `OPENAI_API_KEY` | For embeddings + optionally chat | Required for any embedding to happen at all. |
+| `OPENAI_API_KEY` | For embeddings + optionally chat | Required for any embedding — and therefore any search — to happen at all. |
 | `ANTHROPIC_API_KEY` | For chat only | Optional alternative chat model; embeddings still need `OPENAI_API_KEY`. |
+| `MOONSHOT_API_KEY` | For chat only | Optional alternative chat model (Kimi); embeddings still need `OPENAI_API_KEY`. |
 
 ## Deployment
 
