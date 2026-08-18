@@ -1,0 +1,94 @@
+// Cite — document Q&A / RAG assistant
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [vector]
+}
+
+enum DocumentStatus {
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  documents     Document[]
+  conversations Conversation[]
+}
+
+model Document {
+  id        String         @id @default(cuid())
+  ownerId   String
+  title     String
+  filename  String
+  pageCount Int            @default(0)
+  status    DocumentStatus @default(PROCESSING)
+  error     String?
+  createdAt DateTime       @default(now())
+
+  owner  User    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  chunks Chunk[]
+
+  @@index([ownerId])
+}
+
+/// Embeddings live in a raw `vector(1536)` column (pgvector) — Prisma has no
+/// native scalar for it, so writes/reads for `embedding` go through
+/// `$executeRaw`/`$queryRaw` (see src/lib/vector.ts) rather than the normal
+/// Prisma Client API.
+model Chunk {
+  id         String                 @id @default(cuid())
+  documentId String
+  chunkIndex Int
+  page       Int?
+  content    String
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime               @default(now())
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  ownerId   String
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner    User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  messages Message[]
+
+  @@index([ownerId])
+}
+
+model Message {
+  id             String      @id @default(cuid())
+  conversationId String
+  role           MessageRole
+  content        String
+  citations      Json?
+  createdAt      DateTime    @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+}
