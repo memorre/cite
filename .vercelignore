@@ -1,3 +1,7 @@
 .env
 .env.local
 .env*.local
+
+# 构建产物与依赖不应上传（存在 .vercelignore 时它会取代 .gitignore）
+.next
+node_modules

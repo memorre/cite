@@ -18,7 +18,7 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        sm: "h-8 px-3.5 text-xs",
+        sm: "h-8 px-3.5 text-xs max-sm:h-11 max-sm:px-4",   /* 触屏下满足 44px 点按目标 */
         md: "h-10 px-5",
         lg: "h-12 px-7 text-base",
         icon: "h-10 w-10",
