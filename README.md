@@ -136,6 +136,18 @@ single-environment pilot this trade-off (no migration history) is acceptable; a 
 would want to either wait for that drift-detection quirk to be fixed upstream, or manage migrations against a
 non-Prisma-Postgres Postgres instance.
 
+**`pdf-parse` has to stay out of the server bundle:** on Vercel, every upload returned a 500 with
+`DOMMatrix is not defined`, while the same upload worked in local dev. The error is thrown when the upload
+route's module loads, before any file is read — the production build bundles `pdf-parse` into the server code,
+where it loses the pdf.js worker file and the native canvas polyfill (`@napi-rs/canvas`) it expects to find
+alongside it. The fix is the setup `pdf-parse` documents for Next.js on serverless platforms
+([troubleshooting guide](https://github.com/mehmet-kozan/pdf-parse/blob/main/docs/troubleshooting.md)): list
+`pdf-parse` and `@napi-rs/canvas` under `serverExternalPackages` in [`next.config.ts`](next.config.ts), and
+`import "pdf-parse/worker"` ahead of `pdf-parse` in [`src/lib/pdf.ts`](src/lib/pdf.ts). Reproduced against a
+local production build first — the same 4-page PDF went from a 500 to all four pages parsed — then confirmed on
+the live deployment. The takeaway: `next dev` passing says nothing about how a dependency behaves once bundled,
+so anything with a worker file or a native binary needs a `next build` run before it ships.
+
 ## Known limitations and future backlog
 
 - **No ANN index on the embedding column** — a sequential cosine-distance scan (`ORDER BY embedding <=> $1`) is
@@ -152,9 +164,9 @@ non-Prisma-Postgres Postgres instance.
   with a message saying so, rather than silently succeeding with nothing to search.
 - **No automated test suite** — manually verified: PDF parsing/chunking against a real multi-page PDF, the
   missing-key failure path (document correctly marked `FAILED` with the right message), document delete, and the
-  full UI (library, chat empty/disabled states, light/dark, mobile). The actual embedding call and LLM generation
-  are implemented against the exact LangChain.js v1 API (verified against the installed package's type
-  definitions) but weren't exercised end-to-end during development, since that requires a live API key.
+  full UI (library, chat empty/disabled states, light/dark, mobile). The full pipeline — upload, embedding,
+  retrieval, and cited generation — was also run end-to-end on the production deployment with a live API key: a
+  4-page test PDF, then four questions asked against it.
 
 ## Project structure
 
