@@ -1,3 +1,5 @@
+// Must come before "pdf-parse": sets up the worker and the DOMMatrix polyfill for serverless runtimes.
+import "pdf-parse/worker";
 import { PDFParse } from "pdf-parse";
 
 export async function extractPdfPages(buffer: Buffer): Promise<{ num: number; text: string }[]> {
