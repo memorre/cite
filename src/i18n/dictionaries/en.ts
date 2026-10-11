@@ -20,6 +20,7 @@ const en = {
     close: "Close",
     backHome: "Back to home",
     justNow: "just now",
+    notifications: "Notifications",
   },
   nav: {
     home: "Cite home",
@@ -181,7 +182,7 @@ const en = {
     noDocsBanner: "Upload and process at least one document before you start chatting.",
     goToLibrary: "Go to library",
     emptyThread: "Ask anything about the documents in your library.",
-    placeholder: "Ask a question about your documents",
+    placeholder: "Ask about your documents",
     placeholderNoKey: "Chat is off: no API key set",
     placeholderNoDocs: "Upload a document first",
     inputLabel: "Your question",
@@ -202,6 +203,7 @@ const en = {
       "No LLM provider is configured. Set OPENAI_API_KEY (embeddings and chat), or add ANTHROPIC_API_KEY for chat.",
     streamError: "Error: {message}",
     llmError: "The language model returned an error.",
+    llmErrorDetail: "The language model returned an error: {message}",
   },
   notFound: {
     title: "Page not found",

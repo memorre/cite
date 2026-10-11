@@ -17,6 +17,7 @@ const zhCN: Dictionary = {
     close: "关闭",
     backHome: "返回首页",
     justNow: "刚刚",
+    notifications: "通知",
   },
   nav: {
     home: "Cite 首页",
@@ -54,7 +55,9 @@ const zhCN: Dictionary = {
     },
     features: {
       title: "检索增强，绝不凭空编造",
-      subtitle: "每个回答都能追溯到原始文档",
+      // U+200B marks where this headline may wrap: with word-break: keep-all, Chinese
+      // headlines only break at punctuation, spaces or these word boundaries.
+      subtitle: "每个回答​都能追溯到​原始文档",
       upload: {
         title: "拖入 PDF 即可",
         body: "Cite 自动提取文本、切分段落并建立索引，无需手动设置。",
@@ -178,7 +181,7 @@ const zhCN: Dictionary = {
     noDocsBanner: "开始对话前，请先上传并处理至少一个文档。",
     goToLibrary: "前往文档库",
     emptyThread: "关于文档库里的文档，尽管提问。",
-    placeholder: "就你的文档提个问题",
+    placeholder: "就你的文档提问",
     placeholderNoKey: "对话不可用：未配置 API 密钥",
     placeholderNoDocs: "请先上传文档",
     inputLabel: "你的问题",
@@ -198,6 +201,7 @@ const zhCN: Dictionary = {
     noProvider: "未配置 LLM 服务。请设置 OPENAI_API_KEY（用于嵌入和对话），或另外添加 ANTHROPIC_API_KEY 用于对话。",
     streamError: "错误：{message}",
     llmError: "语言模型返回了错误。",
+    llmErrorDetail: "语言模型返回了错误：{message}",
   },
   notFound: {
     title: "页面不存在",

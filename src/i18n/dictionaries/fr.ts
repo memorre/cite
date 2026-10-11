@@ -20,6 +20,7 @@ const fr: Dictionary = {
     close: "Fermer",
     backHome: "Retour à l’accueil",
     justNow: "à l’instant",
+    notifications: "Notifications",
   },
   nav: {
     home: "Accueil de Cite",
@@ -182,8 +183,8 @@ const fr: Dictionary = {
     noDocsBanner: "Importez et traitez au moins un document avant de lancer une discussion.",
     goToLibrary: "Aller à la bibliothèque",
     emptyThread: "Posez n’importe quelle question sur les documents de votre bibliothèque.",
-    placeholder: "Posez une question sur vos documents",
-    placeholderNoKey: "Discussion désactivée\u00A0: clé d’API manquante",
+    placeholder: "Interrogez vos documents",
+    placeholderNoKey: "Aucune clé d’API configurée",
     placeholderNoDocs: "Importez d’abord un document",
     inputLabel: "Votre question",
     send: "Envoyer",
@@ -203,6 +204,7 @@ const fr: Dictionary = {
       "Aucun fournisseur de LLM n’est configuré. Définissez OPENAI_API_KEY (vectorisation et discussion), ou ajoutez ANTHROPIC_API_KEY pour la discussion.",
     streamError: "Erreur\u00A0: {message}",
     llmError: "Le modèle de langage a renvoyé une erreur.",
+    llmErrorDetail: "Le modèle de langage a renvoyé une erreur\u00A0: {message}",
   },
   notFound: {
     title: "Page introuvable",

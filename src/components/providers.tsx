@@ -29,6 +29,7 @@ export function Providers({
           <Toaster
             position="top-center"
             offset={64}
+            containerAriaLabel={dictionary.common.notifications}
             toastOptions={{
               className: "frosted-popover",
               style: {

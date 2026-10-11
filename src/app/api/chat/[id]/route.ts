@@ -49,7 +49,9 @@ export async function POST(request: Request, { params }: RouteContext<"/api/chat
   try {
     result = await answerQuestion({ question: message, documentIds, history });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : t.api.llmError }, { status: 500 });
+    // Provider errors arrive in English; wrap them in a sentence in the user's language and keep the detail.
+    const error = err instanceof Error && err.message ? f(t.api.llmErrorDetail, { message: err.message }) : t.api.llmError;
+    return NextResponse.json({ error }, { status: 500 });
   }
 
   const encoder = new TextEncoder();

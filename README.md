@@ -118,7 +118,7 @@ globe menu in the top bar. The behaviour matches yetao.org and Snip:
   [`src/i18n/client.tsx`](src/i18n/client.tsx) for Client Components, fed from the root layout.
 - User content (document names, questions, answers) and brand names are never translated. Known ingest failure
   reasons are stored in English (see [`src/lib/doc-errors.ts`](src/lib/doc-errors.ts)) and translated at display
-  time; upstream provider errors are shown as returned. The RAG system prompt is unchanged and doesn't force an
+  time; an upstream provider's error keeps its original wording inside a localized sentence. The RAG system prompt is unchanged and doesn't force an
   output language, so the model normally answers in the language of the question.
 
 ## Environment variables

@@ -19,6 +19,7 @@ const es: Dictionary = {
     close: "Cerrar",
     backHome: "Volver al inicio",
     justNow: "hace un momento",
+    notifications: "Notificaciones",
   },
   nav: {
     home: "Inicio de Cite",
@@ -181,8 +182,8 @@ const es: Dictionary = {
     noDocsBanner: "Sube y procesa al menos un documento antes de empezar a chatear.",
     goToLibrary: "Ir a la biblioteca",
     emptyThread: "Pregunta lo que quieras sobre los documentos de tu biblioteca.",
-    placeholder: "Haz una pregunta sobre tus documentos",
-    placeholderNoKey: "Chat desactivado: falta la clave de API",
+    placeholder: "Pregúntale a tus documentos",
+    placeholderNoKey: "Sin clave de API configurada",
     placeholderNoDocs: "Primero sube un documento",
     inputLabel: "Tu pregunta",
     send: "Enviar",
@@ -202,6 +203,7 @@ const es: Dictionary = {
       "No hay ningún proveedor de LLM configurado. Define OPENAI_API_KEY (embeddings y chat) o agrega ANTHROPIC_API_KEY para el chat.",
     streamError: "Error: {message}",
     llmError: "El modelo de lenguaje devolvió un error.",
+    llmErrorDetail: "El modelo de lenguaje devolvió un error: {message}",
   },
   notFound: {
     title: "Página no encontrada",

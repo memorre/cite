@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { useSWRConfig } from "swr";
 import { ArrowUp, FileText, KeyRound, Quote } from "lucide-react";
 import type { ChatProvider } from "@/lib/llm";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export function ChatClient({
   chatProvider: ChatProvider;
 }) {
   const { t, f } = useI18n();
+  const { mutate } = useSWRConfig();
   const [messages, setMessages] = React.useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = React.useState("");
   const [streaming, setStreaming] = React.useState(false);
@@ -97,6 +99,8 @@ export function ChatClient({
     } finally {
       setStreaming(false);
       setStreamingText("");
+      // The first question renames the chat and the message count changed: refresh the chat list now.
+      mutate("/api/conversations");
     }
   }
 
@@ -210,7 +214,7 @@ export function ChatClient({
             disabled={disabled}
             placeholder={placeholder}
             autoComplete="off"
-            className="h-9 min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-muted disabled:cursor-not-allowed sm:text-[15px]"
+            className="h-9 min-w-0 flex-1 bg-transparent text-[17px] text-ellipsis outline-none placeholder:text-muted disabled:cursor-not-allowed sm:text-[15px]"
           />
           <button
             type="submit"

@@ -44,7 +44,17 @@ export function ChatShell({
   const titleOf = (c: ConversationDTO) => (c.title === DEFAULT_TITLE ? t.chat.untitled : c.title);
   const current = conversations.find((c) => c.id === params?.id);
 
+  // A chat created with "New chat" isn't in SWR's cached list yet; fetch the list again right
+  // away instead of waiting for the next refresh, so it shows up in the sidebar and menu.
+  // (Skipped for a chat that is being deleted, which is missing on purpose.)
+  const deleting = React.useRef(new Set<string>());
+  const missingCurrent = Boolean(params?.id) && !current;
+  React.useEffect(() => {
+    if (missingCurrent && params?.id && !deleting.current.has(params.id)) mutate();
+  }, [missingCurrent, params?.id, mutate]);
+
   async function handleDelete(id: string) {
+    deleting.current.add(id);
     mutate(
       conversations.filter((c) => c.id !== id),
       false
@@ -55,6 +65,7 @@ export function ChatShell({
       // Don't leave the user looking at a thread that no longer exists.
       if (id === params?.id) router.push("/chat");
     } catch {
+      deleting.current.delete(id);
       toast.error(t.chat.deleteFailed);
     }
     mutate();
