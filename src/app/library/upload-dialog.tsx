@@ -3,7 +3,10 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { FileUp, Upload } from "lucide-react";
+import { FileText, FileUp, Upload } from "lucide-react";
+import { useI18n } from "@/i18n/client";
+import type { Dictionary } from "@/i18n/dictionaries/en";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,38 +19,69 @@ import {
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
+type UploadErrorKey = keyof Dictionary["upload"]["errors"];
+/**
+ * Errors are kept as dictionary keys so they follow a language switch. A message the server
+ * sent without a known code is kept with the locale it was written in and hidden once that changes.
+ */
+type UploadError = { key: UploadErrorKey } | { message: string; locale: string };
+
 export function UploadDialog() {
   const router = useRouter();
+  const { t, locale } = useI18n();
+  const inputId = React.useId();
   const [open, setOpen] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
   const [pending, setPending] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [dragging, setDragging] = React.useState(false);
+  const [error, setError] = React.useState<UploadError | null>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const selected = e.target.files?.[0];
+  function pick(selected: File | undefined) {
     setError(null);
     if (!selected) {
       setFile(null);
       return;
     }
     if (selected.type !== "application/pdf") {
-      setError("Only PDF files are supported.");
-      e.target.value = "";
+      setError({ key: "onlyPdf" });
       setFile(null);
       return;
     }
     if (selected.size > MAX_FILE_BYTES) {
-      setError("File is too large — max 4MB for this pilot.");
-      e.target.value = "";
+      setError({ key: "tooLarge" });
       setFile(null);
       return;
     }
     setFile(selected);
   }
 
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    pick(e.target.files?.[0]);
+    // Allow choosing the same file again after an error.
+    e.target.value = "";
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLLabelElement>) {
+    e.preventDefault();
+    setDragging(false);
+    pick(e.dataTransfer.files?.[0]);
+  }
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setFile(null);
+      setError(null);
+      setDragging(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!file) return;
+    if (!file) {
+      setError({ key: "chooseFile" });
+      return;
+    }
     setPending(true);
     setError(null);
 
@@ -57,50 +91,89 @@ export function UploadDialog() {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(body.error ?? "Upload failed");
+        if (typeof body.code === "string" && Object.hasOwn(t.upload.errors, body.code)) {
+          setError({ key: body.code as UploadErrorKey });
+        } else if (typeof body.error === "string" && body.error) {
+          setError({ message: body.error, locale });
+        } else {
+          setError({ key: "failed" });
+        }
         return;
       }
-      toast.success("Document uploaded — processing started");
-      setFile(null);
-      setOpen(false);
+      toast.success(t.upload.success);
+      handleOpenChange(false);
       router.refresh();
     } catch {
-      setError("Upload failed — check your connection and try again.");
+      setError({ key: "network" });
     } finally {
       setPending(false);
     }
   }
 
+  const errorText = !error
+    ? null
+    : "key" in error
+      ? t.upload.errors[error.key]
+      : error.locale === locale
+        ? error.message
+        : null;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <Button onClick={() => setOpen(true)}>
-        <Upload className="h-4 w-4" /> Upload PDF
+        <Upload /> {t.upload.trigger}
       </Button>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Upload a document</DialogTitle>
-          <DialogDescription>PDF only, up to 4MB. It&apos;ll be chunked and embedded automatically.</DialogDescription>
+          <DialogTitle>{t.upload.title}</DialogTitle>
+          <DialogDescription>{t.upload.description}</DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <label
-            htmlFor="file"
-            className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-border bg-surface-2 px-4 py-8 text-center transition-colors hover:border-primary/40"
+            htmlFor={inputId}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            className={cn(
+              "flex cursor-pointer flex-col items-center gap-2 rounded-[16px] border-[1.5px] border-dashed px-4 py-9 text-center transition-colors has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-ring",
+              dragging ? "border-primary bg-primary-soft" : "border-border bg-surface-2 hover:border-primary/50"
+            )}
           >
-            <FileUp className="h-6 w-6 text-muted" />
-            <span className="text-sm font-medium">{file?.name ?? "Choose a PDF file"}</span>
-            <span className="text-xs text-muted">or drag and drop</span>
-            <input id="file" name="file" type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
+            {file ? (
+              <FileText className="h-8 w-8 text-link" strokeWidth={1.6} />
+            ) : (
+              <FileUp className="h-8 w-8 text-muted" strokeWidth={1.6} />
+            )}
+            <span className="max-w-full truncate text-[15px] font-medium">
+              {dragging ? t.upload.dropActive : (file?.name ?? t.upload.choose)}
+            </span>
+            {!file && !dragging && <span className="text-[13px] text-muted">{t.upload.drop}</span>}
+            <input
+              id={inputId}
+              name="file"
+              type="file"
+              accept="application/pdf"
+              className="sr-only"
+              onChange={handleFileChange}
+            />
           </label>
 
-          {error && <p className="rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger">{error}</p>}
+          {errorText && (
+            <p role="alert" className="rounded-[12px] bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger-text">
+              {errorText}
+            </p>
+          )}
 
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
-              Cancel
+          <DialogFooter className="mt-2">
+            <Button type="button" variant="secondary" onClick={() => handleOpenChange(false)}>
+              {t.common.cancel}
             </Button>
             <Button type="submit" disabled={pending || !file}>
-              {pending ? "Uploading…" : "Upload"}
+              {pending ? t.upload.submitting : t.upload.submit}
             </Button>
           </DialogFooter>
         </form>

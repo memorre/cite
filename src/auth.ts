@@ -20,7 +20,9 @@ declare module "next-auth" {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
+  // Errors land on our own login page too, so they're shown in the reader's language instead of
+  // on Auth.js's built-in English-only error page.
+  pages: { signIn: "/login", error: "/login" },
   providers: [
     Credentials({
       name: "Credentials",
