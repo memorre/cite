@@ -1,188 +1,193 @@
-"use client";
-
+import type * as React from "react";
 import Link from "next/link";
-import { motion } from "motion/react";
-import { ArrowRight, BookOpen, FileText, MessagesSquare, Quote, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  BadgeCheck,
+  Blocks,
+  FileUp,
+  LibraryBig,
+  MessageCircleQuestion,
+  Quote,
+  ShieldCheck,
+  Sparkles,
+  Upload,
+} from "lucide-react";
+import { auth } from "@/auth";
+import { getI18n } from "@/i18n/server";
+import { AppIcon } from "@/components/app-icon";
+import { CitationText } from "@/components/citation-text";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { RevealGroup } from "@/components/reveal-group";
 
-const FEATURES = [
-  {
-    icon: FileText,
-    title: "Drop in a PDF",
-    desc: "Upload a document and Cite parses, chunks, and embeds it automatically — no manual setup.",
-  },
-  {
-    icon: Quote,
-    title: "Answers with receipts",
-    desc: "Every response cites the exact passage and page it came from — click through to verify it yourself.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Grounded, not guessed",
-    desc: "Cite only answers from what's actually in your documents, and says so plainly when it can't find the answer.",
-  },
-  {
-    icon: MessagesSquare,
-    title: "Streams as it thinks",
-    desc: "Responses appear token-by-token, the same way a real assistant would type them out.",
-  },
-  {
-    icon: BookOpen,
-    title: "A real library",
-    desc: "Every upload lives in your library — searchable across every conversation, not just the one it started in.",
-  },
-  {
-    icon: Sparkles,
-    title: "Built on LangChain",
-    desc: "Retrieval, chunking, and generation are composed with LangChain.js — swappable models, transparent pipeline.",
-  },
-];
+const delay = (i: number) => ({ "--i": i }) as React.CSSProperties;
 
-export default function Home() {
+export default async function Home() {
+  const [{ t, f }, session] = await Promise.all([getI18n(), auth()]);
+  const signedIn = Boolean(session?.user);
+  const l = t.landing;
+
+  const steps = [
+    { icon: Upload, ...l.steps.upload },
+    { icon: MessageCircleQuestion, ...l.steps.ask },
+    { icon: BadgeCheck, ...l.steps.verify },
+  ];
+
+  const features = [
+    { icon: FileUp, ...l.features.upload },
+    { icon: Quote, ...l.features.receipts },
+    { icon: ShieldCheck, ...l.features.grounded },
+    { icon: Sparkles, ...l.features.streaming },
+    { icon: LibraryBig, ...l.features.library },
+    { icon: Blocks, ...l.features.langchain },
+  ];
+
   return (
-    <div className="relative overflow-hidden">
-      <div className="bg-mesh pointer-events-none absolute inset-x-0 top-0 -z-10 h-[720px]" />
-
+    <RevealGroup>
       {/* Hero */}
-      <section className="mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 pb-20 pt-20 text-center sm:px-6 md:pt-28">
-        <motion.span
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-medium text-muted"
-        >
-          <Sparkles className="h-3.5 w-3.5 text-primary" /> A document Q&amp;A assistant, grounded in your sources
-        </motion.span>
+      <section className="px-4 pb-16 pt-16 text-center sm:px-6 sm:pt-24 md:pb-24 md:pt-28">
+        <div className="mx-auto flex max-w-[980px] flex-col items-center">
+          <div className="rise mb-6">
+            <AppIcon size={76} />
+          </div>
+          <p className="rise text-[17px] font-semibold text-muted sm:text-[21px]" style={delay(1)}>
+            {l.eyebrow}
+          </p>
+          <h1
+            className="rise mt-2 text-[clamp(40px,11vw,96px)] font-bold leading-[1.05] tracking-headline"
+            style={delay(2)}
+          >
+            {l.title}
+          </h1>
+          <p
+            className="headline rise mt-3 text-[clamp(26px,4.6vw,48px)] font-semibold leading-[1.12] tracking-headline text-balance"
+            style={delay(3)}
+          >
+            <span className="text-gradient">{l.subtitle}</span>
+          </p>
+          <p
+            className="rise mx-auto mt-6 max-w-[640px] text-[17px] leading-[1.5] text-muted text-balance sm:text-[21px]"
+            style={delay(4)}
+          >
+            {l.lead}
+          </p>
+          <div
+            className="rise mt-9 flex flex-wrap items-center justify-center gap-x-8 gap-y-4"
+            style={delay(5)}
+          >
+            {signedIn ? (
+              <Button size="lg" asChild>
+                <Link href="/library">{l.ctaLibrary}</Link>
+              </Button>
+            ) : (
+              <>
+                <Button size="lg" asChild>
+                  <Link href="/login">{l.ctaPrimary}</Link>
+                </Button>
+                <Link href="/login" className="link-more text-[17px]">
+                  {l.ctaDemo}
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
 
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl md:text-6xl"
+        {/* Product preview: what an answer with citations looks like */}
+        <figure
+          aria-label={l.preview.label}
+          className="rise mx-auto mt-16 w-full max-w-[680px] rounded-[28px] bg-background-alt p-4 text-left sm:mt-20 sm:p-8"
+          style={delay(6)}
         >
-          Ask your documents.{" "}
-          <span className="bg-gradient-to-r from-[#059669] to-[#b45309] bg-clip-text text-transparent">
-            Get answers with receipts.
-          </span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.12 }}
-          className="max-w-xl text-balance text-muted"
-        >
-          Upload a PDF, ask questions in plain language, and get answers grounded in the actual text — with the
-          exact passage and page cited every time.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.18 }}
-          className="flex flex-wrap items-center justify-center gap-3"
-        >
-          <Button size="lg" asChild>
-            <Link href="/login">
-              Get started <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="secondary" asChild>
-            <Link href="/login">Try the demo account</Link>
-          </Button>
-        </motion.div>
-
-        {/* Floating preview card */}
-        <motion.div
-          initial={{ opacity: 0, y: 40, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.7, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-6 w-full max-w-2xl"
-        >
-          <Card className="glass p-5 text-left shadow-2xl">
-            <div className="mb-4 flex items-center gap-2">
-              <span className="h-2.5 w-2.5 animate-pulse-ring rounded-full bg-accent" />
-              <p className="text-sm font-medium">What was the refund window?</p>
+          <div className="flex flex-col gap-3">
+            <div className="flex justify-end">
+              <p className="max-w-[85%] rounded-[20px] rounded-br-[6px] bg-primary px-4 py-2.5 text-[15px] text-primary-foreground">
+                {l.preview.question}
+              </p>
             </div>
-            <div className="rounded-xl bg-surface-2 p-3 text-sm text-muted">
-              Refunds are available within 30 days of purchase, provided the item is unused [1].
-            </div>
-            <div className="mt-3 flex items-start gap-2 rounded-xl border border-border bg-surface p-2.5 text-xs">
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-semibold text-primary">
-                1
-              </span>
-              <div>
-                <p className="font-medium">terms-of-service.pdf · p.4</p>
-                <p className="mt-0.5 text-muted">&ldquo;...items may be returned within 30 days of the original purchase date...&rdquo;</p>
+            <div className="flex max-w-[92%] flex-col gap-2">
+              <p className="rounded-[20px] rounded-bl-[6px] bg-surface px-4 py-2.5 text-[15px] shadow-card">
+                <CitationText text={l.preview.answer} label={t.chat.citation} />
+              </p>
+              <div className="flex items-start gap-3 rounded-[14px] bg-surface p-3 shadow-card">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary-soft text-[11px] font-semibold text-link">
+                  1
+                </span>
+                <div className="min-w-0 text-[13px]">
+                  <p className="truncate font-medium">
+                    {l.preview.file} · {f(t.chat.page, { page: 4 })}
+                  </p>
+                  <p className="mt-0.5 text-muted">{l.preview.quote}</p>
+                </div>
               </div>
             </div>
-          </Card>
-        </motion.div>
+          </div>
+        </figure>
       </section>
 
-      {/* Feature grid */}
-      <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5 }}
-          className="mb-10 text-center"
-        >
-          <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Retrieval-augmented, not made up</h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-muted">
-            Every answer is traceable back to the document it came from.
-          </p>
-        </motion.div>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.45, delay: (i % 3) * 0.08 }}
-            >
-              <Card className="h-full p-5 transition-transform hover:-translate-y-1 hover:shadow-lg">
-                <span className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                  <f.icon className="h-5 w-5" />
-                </span>
-                <h3 className="mb-1 font-semibold">{f.title}</h3>
-                <p className="text-sm text-muted">{f.desc}</p>
-              </Card>
-            </motion.div>
-          ))}
+      {/* How it works */}
+      <section className="px-4 py-20 sm:px-6 md:py-28">
+        <div className="mx-auto max-w-[980px]">
+          <h2 className="reveal mb-12 text-[clamp(32px,5.2vw,56px)] font-semibold leading-[1.08] tracking-headline md:mb-16">
+            {l.steps.title}
+            <span className="block text-muted">{l.steps.subtitle}</span>
+          </h2>
+          <ol className="grid gap-10 sm:grid-cols-3 sm:gap-8">
+            {steps.map((step, i) => (
+              <li key={step.title} className="reveal flex flex-col gap-3 border-t border-border pt-6" style={delay(i)}>
+                <div className="flex items-center gap-3">
+                  <span className="text-[15px] font-semibold tabular-nums text-muted">{i + 1}</span>
+                  <step.icon className="h-6 w-6 text-link" strokeWidth={1.8} aria-hidden="true" />
+                </div>
+                <h3 className="text-[21px] font-semibold leading-tight tracking-headline">{step.title}</h3>
+                <p className="text-[17px] text-muted">{step.body}</p>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="mx-auto max-w-4xl px-4 pb-24 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="glass relative overflow-hidden p-8 text-center sm:p-12">
-            <div className="bg-mesh pointer-events-none absolute inset-0 -z-10 opacity-60" />
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Ready to see it live?</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-muted">
-              Sign in with the demo account — no setup required.
-            </p>
-            <Button size="lg" className="mt-6" asChild>
-              <Link href="/login">
-                Sign in <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </Card>
-        </motion.div>
+      {/* Features */}
+      <section className="bg-background-alt px-4 py-20 sm:px-6 md:py-28">
+        <div className="mx-auto max-w-[980px]">
+          <h2 className="reveal mb-12 text-[clamp(32px,5.2vw,56px)] font-semibold leading-[1.08] tracking-headline md:mb-16">
+            {l.features.title}
+            <span className="block text-muted">{l.features.subtitle}</span>
+          </h2>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((feature, i) => (
+              <div key={feature.title} className="reveal" style={delay(i % 3)}>
+                <article className="flex h-full flex-col rounded-[28px] bg-surface p-7 shadow-card transition-[scale,box-shadow] duration-500 ease-[var(--ease)] sm:p-8 hover:scale-[1.015] hover:shadow-card-hover">
+                  <feature.icon className="mb-6 h-8 w-8 text-link" strokeWidth={1.6} aria-hidden="true" />
+                  <h3 className="text-[21px] font-semibold leading-tight tracking-headline">{feature.title}</h3>
+                  <p className="mt-2.5 text-[17px] text-muted">{feature.body}</p>
+                </article>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <footer className="border-t border-border py-8 text-center text-xs text-muted">
-        Cite — a portfolio build. Not affiliated with any document management service.
+      {/* Call to action */}
+      <section className="px-4 py-20 text-center sm:px-6 md:py-28">
+        <div className="reveal mx-auto flex max-w-[680px] flex-col items-center">
+          <h2 className="text-[clamp(32px,5.2vw,56px)] font-semibold leading-[1.08] tracking-headline">{l.cta.title}</h2>
+          <p className="mt-4 text-[17px] text-muted sm:text-[21px]">{l.cta.body}</p>
+          <div className="mt-8">
+            <Button size="lg" asChild>
+              <Link href={signedIn ? "/library" : "/login"}>{signedIn ? l.ctaLibrary : l.cta.button}</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <footer className="bg-background-alt px-4 sm:px-6">
+        <div className="mx-auto flex max-w-[980px] flex-col gap-2 border-t border-border py-5 text-[12px] text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            <span className="font-medium text-foreground/80">Cite</span> · {l.footer.note}
+          </p>
+          <a href="https://yetao.org" className="link-more shrink-0">
+            {l.footer.more}
+          </a>
+        </div>
       </footer>
-    </div>
+    </RevealGroup>
   );
 }

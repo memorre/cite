@@ -3,21 +3,28 @@ import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { answerQuestion } from "@/lib/rag";
+import { getChatProvider, hasEmbeddingsProvider } from "@/lib/llm";
+import { getI18n } from "@/i18n/server";
 
 export const maxDuration = 60;
 
 export async function POST(request: Request, { params }: RouteContext<"/api/chat/[id]">) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const [session, { t, f }] = await Promise.all([auth(), getI18n()]);
+  if (!session?.user) return NextResponse.json({ error: t.api.unauthorized }, { status: 401 });
 
   const { id } = await params;
   const conversation = await prisma.conversation.findFirst({ where: { id, ownerId: session.user.id } });
-  if (!conversation) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!conversation) return NextResponse.json({ error: t.api.conversationNotFound }, { status: 404 });
 
   const body = await request.json().catch(() => null);
   const message = body?.message;
   if (typeof message !== "string" || !message.trim()) {
-    return NextResponse.json({ error: "Message is required" }, { status: 400 });
+    return NextResponse.json({ error: t.api.messageRequired }, { status: 400 });
+  }
+
+  // answerQuestion() needs both an embeddings key and a chat model; say so in the user's language.
+  if (!hasEmbeddingsProvider() || !getChatProvider()) {
+    return NextResponse.json({ error: t.api.noProvider }, { status: 503 });
   }
 
   const readyDocs = await prisma.document.findMany({
@@ -27,7 +34,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/chat
   const documentIds = readyDocs.map((d) => d.id);
 
   if (documentIds.length === 0) {
-    return NextResponse.json({ error: "No ready documents to search yet — upload a PDF first." }, { status: 400 });
+    return NextResponse.json({ error: t.api.noReadyDocs }, { status: 400 });
   }
 
   const priorMessages = await prisma.message.findMany({
@@ -42,7 +49,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/chat
   try {
     result = await answerQuestion({ question: message, documentIds, history });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "LLM error" }, { status: 500 });
+    return NextResponse.json({ error: err instanceof Error ? err.message : t.api.llmError }, { status: 500 });
   }
 
   const encoder = new TextEncoder();
@@ -72,7 +79,8 @@ export async function POST(request: Request, { params }: RouteContext<"/api/chat
         });
         controller.enqueue(encoder.encode(`\n\n<<CITATIONS>>${JSON.stringify(result.citations)}`));
       } catch (err) {
-        controller.enqueue(encoder.encode(`\n\n[Error: ${err instanceof Error ? err.message : "stream failed"}]`));
+        const detail = f(t.api.streamError, { message: err instanceof Error ? err.message : t.api.llmError });
+        controller.enqueue(encoder.encode(`\n\n[${detail}]`));
       } finally {
         controller.close();
       }

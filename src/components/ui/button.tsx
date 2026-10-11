@@ -3,25 +3,26 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+// Apple-style pill buttons: filled blue for the main action, a light grey fill for secondary ones.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.97]",
+  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full font-normal transition-[background-color,color,box-shadow,transform] duration-200 ease-out select-none disabled:pointer-events-none disabled:opacity-40 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring active:scale-[0.98] [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        primary:
-          "bg-primary text-primary-foreground shadow-[0_1px_0_0_rgba(255,255,255,0.15)_inset,0_8px_20px_-8px_var(--primary)] hover:brightness-110 hover:-translate-y-0.5",
-        secondary:
-          "bg-surface-2 text-foreground border border-border hover:bg-surface hover:-translate-y-0.5",
-        ghost: "text-foreground hover:bg-surface-2",
-        outline: "border border-border text-foreground hover:bg-surface-2",
-        danger: "bg-danger text-white hover:brightness-110 hover:-translate-y-0.5",
-        link: "text-primary underline-offset-4 hover:underline",
+        primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
+        secondary: "bg-fill text-foreground hover:bg-fill-hover",
+        ghost: "text-foreground hover:bg-fill",
+        outline: "text-link shadow-[inset_0_0_0_1px_var(--link)] hover:bg-link hover:text-white",
+        danger: "bg-danger text-white hover:brightness-110",
+        link: "text-link hover:underline underline-offset-4 active:scale-100",
       },
       size: {
-        sm: "h-8 px-3.5 text-xs max-sm:h-11 max-sm:px-4",   /* 触屏下满足 44px 点按目标 */
-        md: "h-10 px-5",
-        lg: "h-12 px-7 text-base",
-        icon: "h-10 w-10",
+        // On touch screens the small size grows to a 44px tap target.
+        sm: "h-8 px-3.5 text-[13px] max-sm:h-10 max-sm:px-4 [&_svg]:size-3.5",
+        md: "h-10 px-5 text-[15px] [&_svg]:size-4",
+        lg: "h-12 px-6 text-[17px] [&_svg]:size-[18px]",
+        icon: "h-9 w-9 [&_svg]:size-4",
+        "icon-sm": "h-8 w-8 [&_svg]:size-[17px]",
       },
     },
     defaultVariants: {
@@ -40,13 +41,9 @@ export interface ButtonProps
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    return (
-      <Comp
-        ref={ref}
-        className={cn(buttonVariants({ variant, size }), className)}
-        {...props}
-      />
-    );
+    return <Comp ref={ref} className={cn(buttonVariants({ variant, size }), className)} {...props} />;
   }
 );
 Button.displayName = "Button";
+
+export { buttonVariants };

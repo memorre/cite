@@ -6,13 +6,11 @@ import { cn } from "@/lib/utils";
 
 export const Tabs = TabsPrimitive.Root;
 
+// Segmented control, as in iOS and macOS.
 export function TabsList({ className, ...props }: React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>) {
   return (
     <TabsPrimitive.List
-      className={cn(
-        "inline-flex items-center gap-1 rounded-full border border-border bg-surface-2 p-1",
-        className
-      )}
+      className={cn("inline-flex items-center gap-0.5 rounded-[9px] bg-[var(--seg-bg)] p-[2px]", className)}
       {...props}
     />
   );
@@ -22,8 +20,7 @@ export function TabsTrigger({ className, ...props }: React.ComponentPropsWithout
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "relative rounded-full px-4 py-1.5 text-sm font-medium text-muted transition-colors data-[state=active]:text-primary-foreground",
-        "before:absolute before:inset-0 before:-z-10 before:rounded-full before:bg-primary before:opacity-0 before:transition-opacity data-[state=active]:before:opacity-100",
+        "rounded-[7px] px-3.5 py-1 text-[13px] font-medium text-foreground/80 transition-[background-color,box-shadow,color] duration-200 outline-none focus-visible:ring-4 focus-visible:ring-ring data-[state=active]:bg-[var(--seg-thumb)] data-[state=active]:text-foreground data-[state=active]:shadow-[0_3px_8px_rgba(0,0,0,0.12),0_3px_1px_rgba(0,0,0,0.04)]",
         className
       )}
       {...props}

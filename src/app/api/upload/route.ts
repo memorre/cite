@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { extractPdfPages } from "@/lib/pdf";
 import { chunkPages } from "@/lib/chunk";
 import { embedDocumentChunks } from "@/lib/ingest";
+import { DOC_ERRORS } from "@/lib/doc-errors";
+import { getI18n } from "@/i18n/server";
 
 // Give PDF parsing + embedding room to run past Vercel's 10s Hobby default.
 export const maxDuration = 60;
@@ -11,19 +13,19 @@ export const maxDuration = 60;
 const MAX_FILE_BYTES = 4 * 1024 * 1024; // 4MB
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const [session, { t }] = await Promise.all([auth(), getI18n()]);
+  if (!session?.user) return NextResponse.json({ error: t.api.unauthorized }, { status: 401 });
 
   const formData = await request.formData();
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return NextResponse.json({ error: "Choose a PDF file first." }, { status: 400 });
+    return NextResponse.json({ error: t.upload.errors.chooseFile }, { status: 400 });
   }
   if (file.type !== "application/pdf") {
-    return NextResponse.json({ error: "Only PDF files are supported." }, { status: 400 });
+    return NextResponse.json({ error: t.upload.errors.onlyPdf }, { status: 400 });
   }
   if (file.size > MAX_FILE_BYTES) {
-    return NextResponse.json({ error: "File is too large — max 4MB for this pilot." }, { status: 400 });
+    return NextResponse.json({ error: t.upload.errors.tooLarge }, { status: 400 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -46,10 +48,10 @@ export async function POST(request: Request) {
         where: { id: document.id },
         data: {
           status: "FAILED",
-          error: "No extractable text found — this PDF may be scanned images without OCR text.",
+          error: DOC_ERRORS.noTextScanned,
         },
       });
-      return NextResponse.json({ error: "No extractable text found in this PDF." }, { status: 422 });
+      return NextResponse.json({ error: t.upload.errors.noText }, { status: 422 });
     }
 
     await prisma.chunk.createMany({
@@ -70,7 +72,7 @@ export async function POST(request: Request) {
   } catch (err) {
     await prisma.document.update({
       where: { id: document.id },
-      data: { status: "FAILED", error: err instanceof Error ? err.message : "Failed to process PDF" },
+      data: { status: "FAILED", error: err instanceof Error ? err.message : DOC_ERRORS.processFailed },
     });
   }
 

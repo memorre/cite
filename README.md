@@ -1,4 +1,4 @@
-# Cite — Ask Your Documents
+# Cite — Ask your documents
 
 A document Q&A assistant. Upload a PDF, ask questions in plain language, and get answers grounded in the actual
 text — with the exact passage and page cited every time. Built on LangChain.js for retrieval and generation.
@@ -9,8 +9,9 @@ text — with the exact passage and page cited every time. Built on LangChain.js
 |---|---|---|
 | Framework | Next.js 16 (App Router, Turbopack) | Server Components for the library/chat UI, Route Handlers for upload and streamed chat responses. |
 | Language | TypeScript | End-to-end types from schema to UI. |
-| Styling | Tailwind CSS v4 + hand-rolled Radix UI primitives | Same design-system approach as the rest of this portfolio, a third palette (emerald/amber). |
-| Animation | Motion (Framer Motion) | Page transitions, list reveals, a blinking cursor while responses stream. |
+| Styling | Tailwind CSS v4 + hand-rolled Radix UI primitives | Apple-style tokens (system font stack, #f5f5f7 / #0071e3, frosted nav, pill buttons) shared with [yetao.org](https://yetao.org), so the homepage and its apps read as one family. |
+| i18n | Typed dictionaries, no framework | Simplified Chinese, English, French and Spanish; see [Languages](#languages). |
+| Animation | Motion (Framer Motion) + CSS | Subtle list transitions and scroll reveals, a blinking cursor while responses stream; all respect `prefers-reduced-motion`. |
 | RAG | [LangChain.js](https://js.langchain.com) v1 | Chunking (`@langchain/textsplitters`), embeddings + chat models (`@langchain/openai`, `@langchain/anthropic`), composed by hand rather than through `@langchain/community`'s vector-store integrations (see below). |
 | PDF parsing | `pdf-parse` v2 | Per-page text extraction, so every chunk keeps an exact source page for citations. |
 | Vector search | Postgres + `pgvector` | Embeddings live in a real `vector(1536)` column with cosine-distance search — no separate vector DB service. |
@@ -98,6 +99,28 @@ User ──< Document ──< Chunk (content, page, embedding: vector(1536))
   confusing "module has no exports" build error the first time (a `"use server"` file's exports must all be
   async functions; a stray non-function export broke the entire module's codegen).
 
+## Languages
+
+The UI is available in 简体中文 (`zh-CN`), English (`en`), Français (`fr`) and Español (`es`), switched from the
+globe menu in the top bar. The behaviour matches yetao.org and Snip:
+
+- **Choosing a language** writes a `lang` cookie (`Path=/; Max-Age=31536000; SameSite=Lax`, plus
+  `Domain=yetao.org` on yetao.org and its subdomains so the choice is shared), then calls `router.refresh()` so the
+  Server Components re-render in the new language without a full reload.
+- **On each request** the server resolves the locale from the `lang` cookie if it's valid, otherwise from the best
+  `Accept-Language` match (`zh*` → `zh-CN`, `fr*`, `es*`, `en*`), otherwise English. The first paint is already in
+  the right language, `<html lang>` is set, and page titles come from `generateMetadata`.
+- **Strings** live in [`src/i18n/dictionaries/`](src/i18n/dictionaries): `en.ts` is the source of truth and the
+  other three are typed against it, so a missing or extra key fails the build. `{name}` placeholders are
+  interpolated; plurals use `Intl.PluralRules` categories; numbers, dates and relative times go through `Intl`.
+- **Helpers**: `getI18n()` / `getLocale()` in [`src/i18n/server.ts`](src/i18n/server.ts) for Server Components,
+  `generateMetadata` and Route Handlers (API error messages are localized too); `useI18n()` in
+  [`src/i18n/client.tsx`](src/i18n/client.tsx) for Client Components, fed from the root layout.
+- User content (document names, questions, answers) and brand names are never translated. Known ingest failure
+  reasons are stored in English (see [`src/lib/doc-errors.ts`](src/lib/doc-errors.ts)) and translated at display
+  time; upstream provider errors are shown as returned. The RAG system prompt is unchanged and doesn't force an
+  output language, so the model normally answers in the language of the question.
+
 ## Environment variables
 
 | Variable | Required | Notes |
@@ -182,7 +205,8 @@ src/
       upload/                 PDF upload → parse → chunk → embed (Route Handler, maxDuration=60)
       chat/[id]/               retrieval + streamed, cited generation
       documents/, conversations/  list endpoints for SWR polling
-  components/                design system (ui/) + qr-free reusable pieces
+  components/                design system (ui/), header, globe language menu, app icon
+  i18n/                      locale config, typed dictionaries (en, zh-CN, fr, es), server + client helpers
   lib/
     pdf.ts, chunk.ts           parsing + chunking (no LLM key needed)
     llm.ts                     provider selection (OpenAI/Anthropic chat, OpenAI embeddings)

@@ -3,10 +3,11 @@
 import * as React from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useI18n } from "@/i18n/client";
 
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
+  const { t } = useI18n();
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     // one-time mount flag to avoid a hydration mismatch between server
@@ -15,16 +16,20 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  if (!mounted) return <div className="h-10 w-10" />;
+  if (!mounted) return <div className="h-8 w-8" aria-hidden="true" />;
+
+  const isDark = resolvedTheme === "dark";
+  const label = isDark ? t.nav.themeToLight : t.nav.themeToDark;
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      aria-label="Toggle theme"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      className="flex h-8 w-8 items-center justify-center rounded-full text-foreground/80 transition-colors hover:bg-fill hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-ring"
     >
-      {resolvedTheme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-    </Button>
+      {isDark ? <Sun className="h-[17px] w-[17px]" strokeWidth={1.8} /> : <Moon className="h-[17px] w-[17px]" strokeWidth={1.8} />}
+    </button>
   );
 }
