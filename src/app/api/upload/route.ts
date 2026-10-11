@@ -19,13 +19,13 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
-    return NextResponse.json({ error: t.upload.errors.chooseFile }, { status: 400 });
+    return NextResponse.json({ error: t.upload.errors.chooseFile, code: "chooseFile" }, { status: 400 });
   }
   if (file.type !== "application/pdf") {
-    return NextResponse.json({ error: t.upload.errors.onlyPdf }, { status: 400 });
+    return NextResponse.json({ error: t.upload.errors.onlyPdf, code: "onlyPdf" }, { status: 400 });
   }
   if (file.size > MAX_FILE_BYTES) {
-    return NextResponse.json({ error: t.upload.errors.tooLarge }, { status: 400 });
+    return NextResponse.json({ error: t.upload.errors.tooLarge, code: "tooLarge" }, { status: 400 });
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
           error: DOC_ERRORS.noTextScanned,
         },
       });
-      return NextResponse.json({ error: t.upload.errors.noText }, { status: 422 });
+      return NextResponse.json({ error: t.upload.errors.noText, code: "noText" }, { status: 422 });
     }
 
     await prisma.chunk.createMany({
@@ -70,9 +70,12 @@ export async function POST(request: Request) {
     // the "Retry" action re-runs just this step once a key is available.
     await embedDocumentChunks(document.id);
   } catch (err) {
+    // The parser's own message (e.g. "Invalid PDF structure.") is English-only and not useful
+    // to the reader, so log it and store the known reason the library can show in any language.
+    console.error(err);
     await prisma.document.update({
       where: { id: document.id },
-      data: { status: "FAILED", error: err instanceof Error ? err.message : DOC_ERRORS.processFailed },
+      data: { status: "FAILED", error: DOC_ERRORS.processFailed },
     });
   }
 

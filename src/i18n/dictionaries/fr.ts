@@ -35,7 +35,7 @@ const fr: Dictionary = {
     themeToLight: "Passer en mode clair",
   },
   landing: {
-    eyebrow: "Assistant de questions-réponses sur documents",
+    eyebrow: "Assistant documentaire",
     title: "Interrogez vos documents",
     subtitle: "Des réponses, sources à l’appui",
     lead: "Importez un PDF et posez vos questions en langage courant. Les réponses s’appuient uniquement sur le texte source, avec les passages cités et les numéros de page.",
@@ -91,7 +91,7 @@ const fr: Dictionary = {
       button: "Se connecter",
     },
     footer: {
-      note: "Un projet de portfolio de Tao Ye. Sans lien avec un quelconque service de gestion documentaire.",
+      note: "Un projet de portfolio de Tao Ye, sans aucun lien avec un service de gestion documentaire.",
       more: "Autres projets",
     },
   },
@@ -102,7 +102,7 @@ const fr: Dictionary = {
     emailPlaceholder: "vous@exemple.com",
     password: "Mot de passe",
     submit: "Se connecter",
-    submitting: "Connexion…",
+    submitting: "Connexion en cours…",
     or: "ou",
     demo: "Essayer le compte de démonstration",
     demoHint: "Compte de démonstration\u00A0: {email} · {password}",
@@ -115,7 +115,7 @@ const fr: Dictionary = {
     greeting: "Bon retour parmi nous, {name}",
     openChat: "Ouvrir la discussion",
     noKey:
-      "Aucune clé d’API de LLM n’est encore configurée. Les fichiers importés sont tout de même analysés et découpés en passages, mais la recherche nécessite une vectorisation, qui exige précisément {openai}. La discussion accepte aussi {anthropic} ou {moonshot}.",
+      "Aucune clé d’API de LLM n’est encore configurée. Les fichiers importés sont tout de même analysés et découpés en passages, mais la recherche repose sur une vectorisation qui ne fonctionne qu’avec {openai}. La discussion fonctionne aussi avec {anthropic} ou {moonshot}.",
     stats: {
       label: "Aperçu de la bibliothèque",
       documents: "Documents",
@@ -124,7 +124,7 @@ const fr: Dictionary = {
     },
     listTitle: "Documents",
     status: {
-      PROCESSING: "En cours",
+      PROCESSING: "En traitement",
       READY: "Prêt",
       FAILED: "Échec",
     },
@@ -146,6 +146,7 @@ const fr: Dictionary = {
       noText: "Aucun texte exploitable trouvé. Ce PDF contient peut-être des images numérisées sans couche de texte OCR.",
       processFailed: "Impossible de traiter ce PDF.",
       embedFailed: "La vectorisation a échoué.",
+      embedFailedDetail: "La vectorisation a échoué : {message}",
     },
   },
   upload: {
@@ -156,7 +157,7 @@ const fr: Dictionary = {
     drop: "ou glissez-le ici",
     dropActive: "Relâchez pour ajouter le fichier",
     submit: "Importer",
-    submitting: "Importation…",
+    submitting: "Importation en cours…",
     success: "Document importé. Le traitement a commencé.",
     errors: {
       onlyPdf: "Seuls les fichiers PDF sont acceptés.",
@@ -180,7 +181,7 @@ const fr: Dictionary = {
     startTitle: "Lancez une discussion",
     startBody: "Posez une question et Cite cherchera dans tous les documents de votre bibliothèque.",
     noKeyBanner: "Aucune clé d’API de LLM n’est encore configurée, la discussion est donc désactivée.",
-    noDocsBanner: "Importez et traitez au moins un document avant de lancer une discussion.",
+    noDocsBanner: "Importez au moins un document et attendez la fin du traitement avant de lancer une discussion.",
     goToLibrary: "Aller à la bibliothèque",
     emptyThread: "Posez n’importe quelle question sur les documents de votre bibliothèque.",
     placeholder: "Interrogez vos documents",

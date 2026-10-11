@@ -21,6 +21,14 @@ const CITATIONS_MARKER = "\n\n<<CITATIONS>>";
 /** An error whose message came from our API and is already in the user's language. */
 class ApiError extends Error {}
 
+/** What the screen-reader status region says: nothing, "searching…", or the finished answer. */
+type Announcement = { kind: "thinking" } | { kind: "answer"; text: string } | null;
+
+/** The answer as it should be read aloud: without the [1]-style citation markers. */
+function spokenAnswer(text: string) {
+  return text.replace(/\s?\[\d{1,2}\]/g, "").trim();
+}
+
 export function ChatClient({
   conversationId,
   initialMessages,
@@ -38,6 +46,7 @@ export function ChatClient({
   const [input, setInput] = React.useState("");
   const [streaming, setStreaming] = React.useState(false);
   const [streamingText, setStreamingText] = React.useState("");
+  const [announcement, setAnnouncement] = React.useState<Announcement>(null);
   const bottomRef = React.useRef<HTMLDivElement>(null);
   const inputId = React.useId();
 
@@ -57,6 +66,7 @@ export function ChatClient({
     setMessages((prev) => [...prev, { id: `tmp-user-${Date.now()}`, role: "USER", content: question, citations: null }]);
     setStreaming(true);
     setStreamingText("");
+    setAnnouncement({ kind: "thinking" });
 
     try {
       const res = await fetch(`/api/chat/${conversationId}`, {
@@ -94,7 +104,10 @@ export function ChatClient({
       }
 
       setMessages((prev) => [...prev, { id: `tmp-assistant-${Date.now()}`, role: "ASSISTANT", content: text, citations }]);
+      setAnnouncement({ kind: "answer", text: spokenAnswer(text) });
     } catch (err) {
+      // The toast announces the error itself.
+      setAnnouncement(null);
       toast.error(err instanceof ApiError && err.message ? err.message : t.chat.errorFailed);
     } finally {
       setStreaming(false);
@@ -172,7 +185,7 @@ export function ChatClient({
           </AnimatePresence>
 
           {streaming && (
-            <div className="flex justify-start" aria-live="polite" aria-busy="true">
+            <div className="flex justify-start">
               <p className="max-w-[92%] rounded-[20px] rounded-bl-[6px] bg-bubble px-4 py-2.5 text-[15px] leading-[1.5] whitespace-pre-wrap [overflow-wrap:anywhere]">
                 {streamingText ? (
                   <CitationText text={streamingText} label={t.chat.citation} className="caret-blink" />
@@ -195,6 +208,11 @@ export function ChatClient({
           <div ref={bottomRef} />
         </div>
       </ScrollArea>
+
+      {/* Always mounted, so screen readers hear "searching…" and then the finished answer. */}
+      <p role="status" aria-live="polite" className="sr-only">
+        {announcement?.kind === "thinking" ? t.chat.thinking : announcement?.kind === "answer" ? announcement.text : ""}
+      </p>
 
       <div className="frosted shrink-0 border-t border-separator px-4 pb-[max(12px,env(safe-area-inset-bottom))] pt-3 sm:px-6">
         <form

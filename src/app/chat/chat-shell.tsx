@@ -109,7 +109,7 @@ export function ChatShell({
                   >
                     <span className="truncate text-[15px] font-medium leading-snug">{titleOf(c)}</span>
                     <span
-                      className={cn("truncate text-[12px]", active ? "text-primary-foreground/80" : "text-muted")}
+                      className={cn("truncate text-[12px]", active ? "text-primary-foreground" : "text-muted")}
                       suppressHydrationWarning
                     >
                       {p(t.chat.messages, c.messageCount)} · {i18n.relative(c.updatedAt)}

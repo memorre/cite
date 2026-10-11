@@ -49,6 +49,10 @@ export function LibraryClient({
   // The target outlives the dialog's open state so its text doesn't blank out while it animates closed.
   const [deleteTarget, setDeleteTarget] = React.useState<DocumentDTO | null>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
+  // Where keyboard focus goes when the confirmation closes: back to the row's delete button, or,
+  // once that row has been deleted, to the list heading.
+  const deleteOpenerRef = React.useRef<HTMLElement | null>(null);
+  const listHeadingRef = React.useRef<HTMLHeadingElement>(null);
 
   const readyCount = documents.filter((d) => d.status === "READY").length;
   const totalChunks = documents.reduce((acc, d) => acc + d.chunkCount, 0);
@@ -122,7 +126,9 @@ export function LibraryClient({
           <Stat label={t.library.stats.passages} value={i18n.number(totalChunks)} />
         </Card>
 
-        <h2 className="mb-2 px-4 text-[13px] font-medium text-muted">{t.library.listTitle}</h2>
+        <h2 ref={listHeadingRef} tabIndex={-1} className="mb-2 px-4 text-[13px] font-medium text-muted outline-none">
+          {t.library.listTitle}
+        </h2>
 
         {documents.length === 0 ? (
           <Card className="flex flex-col items-center gap-3 px-6 py-14 text-center">
@@ -185,7 +191,7 @@ export function LibraryClient({
                             {meta}
                           </p>
                           {status === "FAILED" && doc.error && (
-                            <p className="mt-1 text-[13px] text-danger">{localizeDocumentError(doc.error, t)}</p>
+                            <p className="mt-1 text-[13px] text-danger-text">{localizeDocumentError(doc.error, i18n)}</p>
                           )}
                         </div>
                         <div className="flex shrink-0 items-center gap-0.5">
@@ -202,7 +208,8 @@ export function LibraryClient({
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => {
+                            onClick={(e) => {
+                              deleteOpenerRef.current = e.currentTarget;
                               setDeleteTarget(doc);
                               setConfirmOpen(true);
                             }}
@@ -229,7 +236,13 @@ export function LibraryClient({
         title={t.library.deleteTitle}
         description={f(t.library.deleteBody, { title: deleteTarget?.title ?? "" })}
         confirmLabel={t.common.delete}
-        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        onConfirm={() => {
+          // The row (and its button) is about to go away.
+          deleteOpenerRef.current = null;
+          if (deleteTarget) handleDelete(deleteTarget);
+        }}
+        returnFocusRef={deleteOpenerRef}
+        fallbackFocusRef={listHeadingRef}
       />
     </div>
   );

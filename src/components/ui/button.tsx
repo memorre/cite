@@ -13,7 +13,7 @@ const buttonVariants = cva(
         secondary: "bg-fill text-foreground hover:bg-fill-hover",
         ghost: "text-foreground hover:bg-fill",
         outline: "text-link shadow-[inset_0_0_0_1px_var(--link)] hover:bg-link hover:text-white",
-        danger: "bg-danger text-white hover:brightness-110",
+        danger: "bg-danger-fill text-white hover:brightness-110",
         link: "text-link hover:underline underline-offset-4 active:scale-100",
       },
       size: {

@@ -25,19 +25,21 @@ export default async function Home() {
   const signedIn = Boolean(session?.user);
   const l = t.landing;
 
+  // Keys must not depend on the language: a language switch would otherwise remount these
+  // .reveal nodes, and the fresh nodes would start out hidden.
   const steps = [
-    { icon: Upload, ...l.steps.upload },
-    { icon: MessageCircleQuestion, ...l.steps.ask },
-    { icon: BadgeCheck, ...l.steps.verify },
+    { id: "upload", icon: Upload, ...l.steps.upload },
+    { id: "ask", icon: MessageCircleQuestion, ...l.steps.ask },
+    { id: "verify", icon: BadgeCheck, ...l.steps.verify },
   ];
 
   const features = [
-    { icon: FileUp, ...l.features.upload },
-    { icon: Quote, ...l.features.receipts },
-    { icon: ShieldCheck, ...l.features.grounded },
-    { icon: Sparkles, ...l.features.streaming },
-    { icon: LibraryBig, ...l.features.library },
-    { icon: Blocks, ...l.features.langchain },
+    { id: "upload", icon: FileUp, ...l.features.upload },
+    { id: "receipts", icon: Quote, ...l.features.receipts },
+    { id: "grounded", icon: ShieldCheck, ...l.features.grounded },
+    { id: "streaming", icon: Sparkles, ...l.features.streaming },
+    { id: "library", icon: LibraryBig, ...l.features.library },
+    { id: "langchain", icon: Blocks, ...l.features.langchain },
   ];
 
   return (
@@ -131,7 +133,7 @@ export default async function Home() {
           </h2>
           <ol className="grid gap-10 sm:grid-cols-3 sm:gap-8">
             {steps.map((step, i) => (
-              <li key={step.title} className="reveal flex flex-col gap-3 border-t border-border pt-6" style={delay(i)}>
+              <li key={step.id} className="reveal flex flex-col gap-3 border-t border-border pt-6" style={delay(i)}>
                 <div className="flex items-center gap-3">
                   <span className="text-[15px] font-semibold tabular-nums text-muted">{i + 1}</span>
                   <step.icon className="h-6 w-6 text-link" strokeWidth={1.8} aria-hidden="true" />
@@ -153,7 +155,7 @@ export default async function Home() {
           </h2>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature, i) => (
-              <div key={feature.title} className="reveal" style={delay(i % 3)}>
+              <div key={feature.id} className="reveal" style={delay(i % 3)}>
                 <article className="flex h-full flex-col rounded-[28px] bg-surface p-7 shadow-card transition-[scale,box-shadow] duration-500 ease-[var(--ease)] sm:p-8 hover:scale-[1.015] hover:shadow-card-hover">
                   <feature.icon className="mb-6 h-8 w-8 text-link" strokeWidth={1.6} aria-hidden="true" />
                   <h3 className="text-[21px] font-semibold leading-tight tracking-headline">{feature.title}</h3>

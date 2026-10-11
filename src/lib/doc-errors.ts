@@ -2,8 +2,8 @@ import type { Dictionary } from "@/i18n/dictionaries/en";
 
 /**
  * Failure reasons stored on Document.error by the ingest pipeline. The stored text stays in
- * English (existing rows keep working); the UI maps these known values to the active language
- * and shows anything else (e.g. an upstream provider's message) as is.
+ * English (existing rows keep working); the UI maps these known values to the active language.
+ * Rows written before these reasons existed may hold some other text, which is shown as is.
  */
 export const DOC_ERRORS = {
   noEmbeddingsKey: "No OPENAI_API_KEY configured — set one and retry.",
@@ -13,7 +13,16 @@ export const DOC_ERRORS = {
   embedFailed: "Embedding failed",
 } as const;
 
-export function localizeDocumentError(error: string, t: Dictionary): string {
+/**
+ * An embedding failure is stored as `${DOC_ERRORS.embedFailed}: ${provider message}`, so the
+ * provider's own (untranslatable) detail can follow a translated lead-in.
+ */
+export const EMBED_DETAIL_SEPARATOR = ": ";
+
+export function localizeDocumentError(
+  error: string,
+  { t, f }: { t: Dictionary; f: (template: string, vars?: Record<string, string | number>) => string }
+): string {
   switch (error) {
     case DOC_ERRORS.noEmbeddingsKey:
       return t.library.errors.noEmbeddingsKey;
@@ -24,7 +33,10 @@ export function localizeDocumentError(error: string, t: Dictionary): string {
       return t.library.errors.processFailed;
     case DOC_ERRORS.embedFailed:
       return t.library.errors.embedFailed;
-    default:
-      return error;
   }
+  const detailPrefix = DOC_ERRORS.embedFailed + EMBED_DETAIL_SEPARATOR;
+  if (error.startsWith(detailPrefix)) {
+    return f(t.library.errors.embedFailedDetail, { message: error.slice(detailPrefix.length) });
+  }
+  return error;
 }

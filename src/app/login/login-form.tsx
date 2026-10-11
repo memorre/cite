@@ -10,13 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { loginErrorKey, type LoginErrorKey } from "./errors";
 
 const DEMO_ACCOUNT = { email: "demo@cite.app", password: "password123" };
 
-export function LoginForm() {
+export function LoginForm({ initialError = null }: { initialError?: LoginErrorKey | null }) {
   const router = useRouter();
   const { t, f } = useI18n();
-  const [error, setError] = React.useState<string | null>(null);
+  // A key, not the translated text, so a visible error follows a language switch.
+  const [error, setError] = React.useState<LoginErrorKey | null>(initialError);
   const [pending, setPending] = React.useState(false);
   const [demoPending, setDemoPending] = React.useState(false);
 
@@ -32,13 +34,13 @@ export function LoginForm() {
         redirect: false,
       });
       if (res?.error) {
-        setError(t.login.errorInvalid);
+        setError(loginErrorKey(res.error));
         return;
       }
       router.push("/library");
       router.refresh();
     } catch {
-      setError(t.login.errorGeneric);
+      setError("errorGeneric");
     } finally {
       setPending(false);
     }
@@ -50,13 +52,13 @@ export function LoginForm() {
     try {
       const res = await signIn("credentials", { ...DEMO_ACCOUNT, redirect: false });
       if (res?.error) {
-        setError(t.login.errorDemo);
+        setError("errorDemo");
         return;
       }
       router.push("/library");
       router.refresh();
     } catch {
-      setError(t.login.errorDemo);
+      setError("errorDemo");
     } finally {
       setDemoPending(false);
     }
@@ -90,8 +92,8 @@ export function LoginForm() {
             </div>
 
             {error && (
-              <p role="alert" className="rounded-[12px] bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger">
-                {error}
+              <p role="alert" className="rounded-[12px] bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger-text">
+                {t.login[error]}
               </p>
             )}
 

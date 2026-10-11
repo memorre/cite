@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FileText, FileUp, Upload } from "lucide-react";
 import { useI18n } from "@/i18n/client";
+import type { Dictionary } from "@/i18n/dictionaries/en";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,15 +19,22 @@ import {
 
 const MAX_FILE_BYTES = 4 * 1024 * 1024;
 
+type UploadErrorKey = keyof Dictionary["upload"]["errors"];
+/**
+ * Errors are kept as dictionary keys so they follow a language switch. A message the server
+ * sent without a known code is kept with the locale it was written in and hidden once that changes.
+ */
+type UploadError = { key: UploadErrorKey } | { message: string; locale: string };
+
 export function UploadDialog() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const inputId = React.useId();
   const [open, setOpen] = React.useState(false);
   const [file, setFile] = React.useState<File | null>(null);
   const [pending, setPending] = React.useState(false);
   const [dragging, setDragging] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = React.useState<UploadError | null>(null);
 
   function pick(selected: File | undefined) {
     setError(null);
@@ -35,12 +43,12 @@ export function UploadDialog() {
       return;
     }
     if (selected.type !== "application/pdf") {
-      setError(t.upload.errors.onlyPdf);
+      setError({ key: "onlyPdf" });
       setFile(null);
       return;
     }
     if (selected.size > MAX_FILE_BYTES) {
-      setError(t.upload.errors.tooLarge);
+      setError({ key: "tooLarge" });
       setFile(null);
       return;
     }
@@ -71,7 +79,7 @@ export function UploadDialog() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!file) {
-      setError(t.upload.errors.chooseFile);
+      setError({ key: "chooseFile" });
       return;
     }
     setPending(true);
@@ -83,18 +91,32 @@ export function UploadDialog() {
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(typeof body.error === "string" ? body.error : t.upload.errors.failed);
+        if (typeof body.code === "string" && Object.hasOwn(t.upload.errors, body.code)) {
+          setError({ key: body.code as UploadErrorKey });
+        } else if (typeof body.error === "string" && body.error) {
+          setError({ message: body.error, locale });
+        } else {
+          setError({ key: "failed" });
+        }
         return;
       }
       toast.success(t.upload.success);
       handleOpenChange(false);
       router.refresh();
     } catch {
-      setError(t.upload.errors.network);
+      setError({ key: "network" });
     } finally {
       setPending(false);
     }
   }
+
+  const errorText = !error
+    ? null
+    : "key" in error
+      ? t.upload.errors[error.key]
+      : error.locale === locale
+        ? error.message
+        : null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -140,9 +162,9 @@ export function UploadDialog() {
             />
           </label>
 
-          {error && (
-            <p role="alert" className="rounded-[12px] bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger">
-              {error}
+          {errorText && (
+            <p role="alert" className="rounded-[12px] bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger-text">
+              {errorText}
             </p>
           )}
 

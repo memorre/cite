@@ -26,8 +26,15 @@ export function RevealGroup({ children }: { children: React.ReactNode }) {
       { rootMargin: "0px 0px -8% 0px" }
     );
     root.classList.add("reveal-ready");
-    root.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    // Also watch nodes React adds later (e.g. after a re-render), or they'd stay hidden.
+    const observeAll = () => root.querySelectorAll(".reveal:not(.in)").forEach((el) => observer.observe(el));
+    observeAll();
+    const mutations = new MutationObserver(observeAll);
+    mutations.observe(root, { childList: true, subtree: true });
+    return () => {
+      observer.disconnect();
+      mutations.disconnect();
+    };
   }, []);
 
   return <div ref={ref}>{children}</div>;

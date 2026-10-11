@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getEmbeddings, hasEmbeddingsProvider } from "@/lib/llm";
 import { setChunkEmbedding } from "@/lib/vector";
-import { DOC_ERRORS } from "@/lib/doc-errors";
+import { DOC_ERRORS, EMBED_DETAIL_SEPARATOR } from "@/lib/doc-errors";
 
 const BATCH_SIZE = 50;
 
@@ -41,9 +41,13 @@ export async function embedDocumentChunks(documentId: string) {
     }
     await prisma.document.update({ where: { id: documentId }, data: { status: "READY", error: null } });
   } catch (err) {
+    console.error(err);
+    // Keep the provider's message (often the actionable part, e.g. an invalid key) behind a known
+    // prefix, so the library can put a translated lead-in in front of it.
+    const detail = err instanceof Error ? err.message.trim() : "";
     await prisma.document.update({
       where: { id: documentId },
-      data: { status: "FAILED", error: err instanceof Error ? err.message : DOC_ERRORS.embedFailed },
+      data: { status: "FAILED", error: detail ? `${DOC_ERRORS.embedFailed}${EMBED_DETAIL_SEPARATOR}${detail}` : DOC_ERRORS.embedFailed },
     });
   }
 }
