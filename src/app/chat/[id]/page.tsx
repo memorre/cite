@@ -2,15 +2,13 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { countReadyDocuments, getConversationForOwner, listMessages } from "@/lib/data";
 import { getChatProvider } from "@/lib/llm";
 import { getI18n } from "@/i18n/server";
 import { ChatClient } from "./chat-client";
 
 /** One lookup per request, shared by generateMetadata and the page. */
-const getConversation = cache(async (id: string, ownerId: string) =>
-  prisma.conversation.findFirst({ where: { id, ownerId } })
-);
+const getConversation = cache(getConversationForOwner);
 
 export async function generateMetadata({ params }: PageProps<"/chat/[id]">): Promise<Metadata> {
   const [user, { id }, { t }] = await Promise.all([requireUser(), params, getI18n()]);
@@ -27,24 +25,12 @@ export default async function ConversationPage({ params }: PageProps<"/chat/[id]
   const conversation = await getConversation(id, user.id);
   if (!conversation) notFound();
 
-  const messages = await prisma.message.findMany({
-    where: { conversationId: conversation.id },
-    orderBy: { createdAt: "asc" },
-  });
-
-  const readyDocCount = await prisma.document.count({ where: { ownerId: user.id, status: "READY" } });
+  const [messages, readyDocCount] = await Promise.all([listMessages(conversation.id), countReadyDocuments(user.id)]);
 
   return (
     <ChatClient
       conversationId={conversation.id}
-      initialMessages={messages.map((m) => ({
-        id: m.id,
-        role: m.role,
-        content: m.content,
-        citations: (m.citations as unknown as
-          | { index: number; documentId: string; documentTitle: string; page: number | null; snippet: string }[]
-          | null) ?? null,
-      }))}
+      initialMessages={messages}
       hasReadyDocuments={readyDocCount > 0}
       chatProvider={getChatProvider()}
     />

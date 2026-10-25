@@ -15,6 +15,8 @@ function buildContextBlock(chunks: SimilarChunk[]) {
 
 export type Citation = {
   index: number;
+  /** The cited passage, for clients that show it in full (GET /api/chunks/[id]). Absent on older answers. */
+  chunkId?: string;
   documentId: string;
   documentTitle: string;
   page: number | null;
@@ -42,6 +44,7 @@ export async function answerQuestion(params: { question: string; documentIds: st
 
   const citations: Citation[] = chunks.map((c, i) => ({
     index: i + 1,
+    chunkId: c.id,
     documentId: c.documentId,
     documentTitle: c.documentTitle,
     page: c.page,

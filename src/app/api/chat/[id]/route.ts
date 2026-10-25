@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { HumanMessage, AIMessage } from "@langchain/core/messages";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { UNTITLED_CONVERSATION } from "@/lib/data";
 import { answerQuestion } from "@/lib/rag";
 import { getChatProvider, hasEmbeddingsProvider } from "@/lib/llm";
 import { getI18n } from "@/i18n/server";
@@ -77,7 +78,7 @@ export async function POST(request: Request, { params }: RouteContext<"/api/chat
         });
         await prisma.conversation.update({
           where: { id: conversation.id },
-          data: conversation.title === "New chat" ? { title: message.slice(0, 60) } : { updatedAt: new Date() },
+          data: conversation.title === UNTITLED_CONVERSATION ? { title: message.slice(0, 60) } : { updatedAt: new Date() },
         });
         controller.enqueue(encoder.encode(`\n\n<<CITATIONS>>${JSON.stringify(result.citations)}`));
       } catch (err) {
@@ -89,5 +90,12 @@ export async function POST(request: Request, { params }: RouteContext<"/api/chat
     },
   });
 
-  return new Response(stream, { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      // Without this, clients that sniff content types (Apple's URLSession
+      // holds back the first 512 bytes) show a short answer only at the end.
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
 }

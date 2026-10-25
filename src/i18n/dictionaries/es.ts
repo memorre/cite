@@ -198,6 +198,8 @@ const es: Dictionary = {
   api: {
     unauthorized: "Primero inicia sesión.",
     conversationNotFound: "No se encontró este chat.",
+    documentNotFound: "No se encontró este documento.",
+    passageNotFound: "Este fragmento ya no existe.",
     messageRequired: "Primero escribe una pregunta.",
     noReadyDocs: "Todavía no hay documentos listos para buscar. Primero sube un PDF.",
     noProvider:

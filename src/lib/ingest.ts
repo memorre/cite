@@ -7,7 +7,9 @@ const BATCH_SIZE = 50;
 
 /**
  * Embeds every not-yet-embedded chunk for a document and flips its status.
- * Safe to call more than once — already-embedded chunks aren't re-sent.
+ * Safe to call more than once: already-embedded chunks aren't re-sent, and each batch is saved as
+ * soon as it's embedded, so a run cut off by the function time limit leaves its progress behind
+ * and the next run (a retry) picks up from there instead of starting over.
  */
 export async function embedDocumentChunks(documentId: string) {
   if (!hasEmbeddingsProvider()) {
@@ -19,13 +21,14 @@ export async function embedDocumentChunks(documentId: string) {
   }
 
   const embeddings = getEmbeddings()!;
-  const chunks = await prisma.chunk.findMany({
-    where: { documentId },
-    orderBy: { chunkIndex: "asc" },
-    select: { id: true, content: true },
-  });
+  // `embedding` is an Unsupported() column, so Prisma's query API can't filter on it.
+  const chunks = await prisma.$queryRaw<{ id: string; content: string }[]>`
+    SELECT id, content FROM "Chunk"
+    WHERE "documentId" = ${documentId} AND embedding IS NULL
+    ORDER BY "chunkIndex" ASC
+  `;
 
-  if (chunks.length === 0) {
+  if (chunks.length === 0 && (await prisma.chunk.count({ where: { documentId } })) === 0) {
     await prisma.document.update({
       where: { id: documentId },
       data: { status: "FAILED", error: DOC_ERRORS.noText },
@@ -39,7 +42,14 @@ export async function embedDocumentChunks(documentId: string) {
       const vectors = await embeddings.embedDocuments(batch.map((c) => c.content));
       await Promise.all(batch.map((c, idx) => setChunkEmbedding(c.id, vectors[idx])));
     }
-    await prisma.document.update({ where: { id: documentId }, data: { status: "READY", error: null } });
+    // READY only once every passage has a vector, so a run that overlapped another one can't
+    // mark the document READY while passages are still missing.
+    const [{ missing }] = await prisma.$queryRaw<{ missing: number }[]>`
+      SELECT COUNT(*)::int AS missing FROM "Chunk" WHERE "documentId" = ${documentId} AND embedding IS NULL
+    `;
+    if (missing === 0) {
+      await prisma.document.update({ where: { id: documentId }, data: { status: "READY", error: null } });
+    }
   } catch (err) {
     console.error(err);
     // Keep the provider's message (often the actionable part, e.g. an invalid key) behind a known
