@@ -198,6 +198,8 @@ const en = {
   api: {
     unauthorized: "Please sign in first.",
     conversationNotFound: "This conversation doesn’t exist.",
+    documentNotFound: "This document doesn’t exist.",
+    passageNotFound: "This passage doesn’t exist anymore.",
     messageRequired: "Type a question first.",
     noReadyDocs: "No documents are ready to search yet. Upload a PDF first.",
     noProvider:

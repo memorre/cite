@@ -197,6 +197,8 @@ const zhCN: Dictionary = {
   api: {
     unauthorized: "请先登录。",
     conversationNotFound: "找不到这个对话。",
+    documentNotFound: "找不到这个文档。",
+    passageNotFound: "这个段落已不存在。",
     messageRequired: "请先输入问题。",
     noReadyDocs: "还没有可检索的文档，请先上传 PDF。",
     noProvider: "未配置 LLM 服务。请设置 OPENAI_API_KEY（用于嵌入和对话），或另外添加 ANTHROPIC_API_KEY 用于对话。",

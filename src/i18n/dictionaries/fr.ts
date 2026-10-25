@@ -199,6 +199,8 @@ const fr: Dictionary = {
   api: {
     unauthorized: "Veuillez d’abord vous connecter.",
     conversationNotFound: "Cette discussion est introuvable.",
+    documentNotFound: "Ce document est introuvable.",
+    passageNotFound: "Ce passage n’existe plus.",
     messageRequired: "Saisissez d’abord une question.",
     noReadyDocs: "Aucun document n’est encore prêt pour la recherche. Importez d’abord un PDF.",
     noProvider:
